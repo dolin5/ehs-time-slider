@@ -1,13 +1,14 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/TimeExtent", "esri/widgets/Expand", "esri/widgets/Legend"], function (require, exports, Map_1, MapView_1, FeatureLayer_1, TimeSlider_1, TimeExtent_1, Expand_1, Legend_1) {
+define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/FeatureLayer", "esri/widgets/TimeSlider", "esri/tasks/support/Query", "esri/TimeExtent", "esri/widgets/Expand", "esri/widgets/Legend"], function (require, exports, Map_1, MapView_1, FeatureLayer_1, TimeSlider_1, Query_1, TimeExtent_1, Expand_1, Legend_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     Map_1 = __importDefault(Map_1);
     MapView_1 = __importDefault(MapView_1);
     FeatureLayer_1 = __importDefault(FeatureLayer_1);
     TimeSlider_1 = __importDefault(TimeSlider_1);
+    Query_1 = __importDefault(Query_1);
     TimeExtent_1 = __importDefault(TimeExtent_1);
     Expand_1 = __importDefault(Expand_1);
     Legend_1 = __importDefault(Legend_1);
@@ -75,8 +76,13 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
             };
             // run statistics on earthquakes fall within the current time extent
             var statQuery = layerView.effect.filter.createQuery();
+            var query = new Query_1.default({
+                where: "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth() + 1) + "/" + timeSlider.timeExtent.end.getDate() + "/" + timeSlider.timeExtent.end.getFullYear() + "' " +
+                    "AND ISSUEDATE >= '" + (timeSlider.fullTimeExtent.start.getMonth() + 1) + "/" + timeSlider.fullTimeExtent.start.getDate() + "/" + timeSlider.fullTimeExtent.start.getFullYear() + "'",
+                outFields: ['ISSUEDATE'],
+            });
             septicsLayer
-                .queryFeatures({ where: "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth() + 1) + "/" + timeSlider.timeExtent.end.getDate() + "/" + timeSlider.timeExtent.end.getFullYear() + "' " +
+                .queryFeatureCount({ where: "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth() + 1) + "/" + timeSlider.timeExtent.end.getDate() + "/" + timeSlider.timeExtent.end.getFullYear() + "' " +
                     "AND ISSUEDATE >= '" + (timeSlider.fullTimeExtent.start.getMonth() + 1) + "/" + timeSlider.fullTimeExtent.start.getDate() + "/" + timeSlider.fullTimeExtent.start.getFullYear() + "'",
                 outFields: ['ISSUEDATE']
             })
@@ -87,14 +93,12 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
                     return result.error;
                 }
                 else {
-                    if (result.features.length >= 1) {
-                        var yearHtml = "Septics issued between " +
-                            timeSlider.fullTimeExtent.start.toLocaleDateString() +
-                            " - " +
-                            timeSlider.timeExtent.end.toLocaleDateString() +
-                            "<br/>" + result.features.length;
-                        statsDiv.innerHTML = yearHtml;
-                    }
+                    var yearHtml = "Septics issued between " +
+                        timeSlider.fullTimeExtent.start.toLocaleDateString() +
+                        " - " +
+                        timeSlider.timeExtent.end.toLocaleDateString() +
+                        "<br/>" + result;
+                    statsDiv.innerHTML = yearHtml;
                 }
             })
                 .catch(function (error) {
@@ -102,7 +106,6 @@ define(["require", "exports", "esri/Map", "esri/views/MapView", "esri/layers/Fea
             });
         });
     });
-    // watch for time slider timeExtent change
     // add a legend for the earthquakes layer
     var legendExpand = new Expand_1.default({
         collapsedIconClass: "esri-icon-collapse",

@@ -3,6 +3,7 @@ import MapView from "esri/views/MapView";
 import GeoJSONLayer from "esri/layers/GeoJSONLayer";
 import FeatureLayer from "esri/layers/FeatureLayer";
 import TimeSlider from "esri/widgets/TimeSlider";
+import Query from "esri/tasks/support/Query";
 import TimeExtent from "esri/TimeExtent";
 import Expand from "esri/widgets/Expand";
 import Legend from "esri/widgets/Legend";
@@ -81,10 +82,16 @@ view.whenLayerView(septicsLayer).then(function(lv) {
   
     // run statistics on earthquakes fall within the current time extent
     const statQuery = layerView.effect.filter.createQuery();
+    const query = new Query({
+      where:  "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth()+1)+"/"+timeSlider.timeExtent.end.getDate()+"/"+timeSlider.timeExtent.end.getFullYear() + "' "+
+       "AND ISSUEDATE >= '"+(timeSlider.fullTimeExtent.start.getMonth()+1)+"/"+timeSlider.fullTimeExtent.start.getDate()+"/"+timeSlider.fullTimeExtent.start.getFullYear()+"'",
+       outFields:['ISSUEDATE'],
+       
+    })
     
   
     septicsLayer
-      .queryFeatures({where:  "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth()+1)+"/"+timeSlider.timeExtent.end.getDate()+"/"+timeSlider.timeExtent.end.getFullYear() + "' "+
+      .queryFeatureCount({where:  "ISSUEDATE <= '" + (timeSlider.timeExtent.end.getMonth()+1)+"/"+timeSlider.timeExtent.end.getDate()+"/"+timeSlider.timeExtent.end.getFullYear() + "' "+
        "AND ISSUEDATE >= '"+(timeSlider.fullTimeExtent.start.getMonth()+1)+"/"+timeSlider.fullTimeExtent.start.getDate()+"/"+timeSlider.fullTimeExtent.start.getFullYear()+"'",
        outFields:['ISSUEDATE']
       })
@@ -94,16 +101,15 @@ view.whenLayerView(septicsLayer).then(function(lv) {
         if (result.error) {
           return result.error;
         } else {
-          if (result.features.length >= 1) {
-            var yearHtml =
-              "Septics issued between " +
-              timeSlider.fullTimeExtent.start.toLocaleDateString() +
-              " - " +
-              timeSlider.timeExtent.end.toLocaleDateString() +
-              "<br/>" + result.features.length;
-              statsDiv.innerHTML = yearHtml;
-          }
+          var yearHtml =
+            "Septics issued between " +
+            timeSlider.fullTimeExtent.start.toLocaleDateString() +
+            " - " +
+            timeSlider.timeExtent.end.toLocaleDateString() +
+            "<br/>" + result;
+            statsDiv.innerHTML = yearHtml;
         }
+        
       })
       .catch(function(error) {
         console.log(error);
@@ -112,9 +118,6 @@ view.whenLayerView(septicsLayer).then(function(lv) {
 
   
 });
-
-// watch for time slider timeExtent change
-
 
 
 // add a legend for the earthquakes layer
